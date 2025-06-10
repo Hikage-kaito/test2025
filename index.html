@@ -1,11 +1,654 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>簡単なHTMLページ</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ドリンク選択UI</title>
+  <style>
+    body {
+      background: #888;
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans JP', 'Meiryo', 'Hiragino Kaku Gothic Pro', 'Arial', sans-serif;
+    }
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      gap: 80px;
+    }
+    .panel {
+      background: #111;
+      border-radius: 16px;
+      padding: 36px 32px 32px 32px;
+      min-width: 400px;
+      max-width: 400px;
+      min-height: 600px;
+      color: #fff;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.5);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .section-title {
+      color: #b39ddb;
+      font-size: 1.1rem;
+      margin-bottom: 18px;
+      letter-spacing: 0.05em;
+      text-align: left;
+      width: 100%;
+    }
+    .divider {
+      border-top: 3px solid #2979ff;
+      margin: 0 0 0 0;
+      flex: 1 1 0;
+      min-width: 0;
+      height: 0;
+      vertical-align: middle;
+    }
+    .divider.hot {
+      border-color: #ff3d3d;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      margin: 32px 0 0 0;
+      width: 100%;
+    }
+    .drink-btn {
+      background: none;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 18px;
+      width: 160px;
+      transition: transform 0.1s;
+    }
+    .drink-btn:active {
+      transform: scale(0.97);
+    }
+    .drink-icon, .strength-icon {
+      position: relative;
+      width: 110px;
+      height: 110px;
+      border: 6px solid #2979ff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+      background: #000;
+      transition: border-color 0.2s;
+    }
+    .drink-icon::before, .strength-icon::before {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      right: 3px;
+      bottom: 3px;
+      border: 7px solid #fff;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .drink-icon svg, .strength-icon svg {
+      position: relative;
+      z-index: 2;
+    }
+    .drink-btn.hot .drink-icon {
+      border-color: #ff3d3d;
+    }
+    .drink-icon svg {
+      width: 60px;
+      height: 60px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2.5;
+    }
+    .drink-icon.large svg {
+      width: 80px;
+      height: 80px;
+    }
+    .drink-icon.regular svg {
+      width: 44px;
+      height: 44px;
+    }
+    .drink-label-jp,
+    .strength-label-jp {
+      color: #fff;
+    }
+    .drink-label-jp {
+      font-size: 2.1rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+      letter-spacing: 0.08em;
+    }
+    .drink-label-en {
+      font-size: 1.05rem;
+      letter-spacing: 0.35em;
+      color: #bdbdbd;
+      margin-bottom: 8px;
+      margin-top: 2px;
+    }
+    .temp-label {
+      color: #2979ff;
+      font-size: 1.3rem;
+      margin: 0 0 0 2px;
+      display: inline-block;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      position: relative;
+      left: 2px;
+    }
+    .temp-label.hot {
+      color: #ff3d3d;
+      left: 2px;
+    }
+    /* 濃さ選択画面 */
+    .strength-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      height: 100%;
+      min-width: 340px;
+      margin-top: 40px;
+      width: 100%;
+    }
+    .strength-btn {
+      background: none;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      margin: 32px 0;
+      width: 100%;
+      transition: transform 0.1s;
+    }
+    .strength-btn:active {
+      transform: scale(0.97);
+    }
+    .strength-icon {
+      width: 90px;
+      height: 90px;
+      border: 6px solid #2979ff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 32px;
+      background: #000;
+    }
+    .strength-icon svg {
+      width: 48px;
+      height: 48px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2.5;
+    }
+    .strength-icon.large svg {
+      width: 64px;
+      height: 64px;
+    }
+    .strength-icon.normal svg {
+      width: 48px;
+      height: 48px;
+    }
+    .strength-icon.weak svg {
+      width: 32px;
+      height: 32px;
+    }
+    .strength-icon.hot,
+    .strength-icon.hot::before {
+      border-color: #ff3d3d !important;
+    }
+    /* HOT時も内側枠は白色 */
+    .strength-icon.hot::before {
+      border-color: #fff !important;
+    }
+    .strength-label-jp {
+      font-size: 2.2rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+    }
+    .back-btn {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: #222;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.2s;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+    }
+    .back-btn:hover {
+      background: #444;
+    }
+    .drink-type-btn {
+      background: #222;
+      color: #fff;
+      border: 3px solid #2979ff;
+      border-radius: 32px;
+      font-size: 2.1rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      padding: 24px 64px;
+      margin: 32px 0;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.1s;
+      width: 320px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+    }
+    .drink-type-btn:active {
+      background: #2979ff;
+      color: #fff;
+      border-color: #fff;
+      transform: scale(0.97);
+    }
+    .drink-type-btn:active,
+    .drink-type-btn.selected {
+      background: radial-gradient(circle at 50% 60%, rgba(41,121,255,0.38) 0%, rgba(41,121,255,0.22) 55%, rgba(0,0,0,0.0) 100%), #2979ff;
+      color: #fff;
+      border-color: #fff;
+      box-shadow: 0 0 0 12px rgba(41,121,255,0.22) inset;
+    }
+    .drink-type-btn.selected {
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .drink-type-label {
+      font-size: 2.1rem;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.08em;
+    }
+    .drink-btn.selected, .drink-btn.selected .drink-icon {
+      border-color: #2979ff !important;
+      box-shadow: 0 0 0 4px rgba(41,121,255,0.25);
+    }
+    .drink-btn.hot.selected, .drink-btn.hot.selected .drink-icon {
+      border-color: #ff3d3d !important;
+      box-shadow: 0 0 0 4px rgba(255,61,61,0.25);
+    }
+    .drink-btn.selected .drink-icon {
+      background: radial-gradient(circle at 50% 60%, rgba(41,121,255,0.38) 0%, rgba(41,121,255,0.22) 55%, rgba(0,0,0,0.0) 100%), #000;
+      box-shadow: 0 0 0 12px rgba(41,121,255,0.22) inset;
+    }
+    .drink-btn.hot.selected .drink-icon {
+      background: radial-gradient(circle at 50% 60%, rgba(255,61,61,0.38) 0%, rgba(255,61,61,0.22) 55%, rgba(0,0,0,0.0) 100%), #000;
+      box-shadow: 0 0 0 12px rgba(255,61,61,0.22) inset;
+    }
+    /* 濃さ選択ボタンの発光（HOT時も押した時だけ発光） */
+    .strength-btn:active .strength-icon,
+    .strength-btn.selected .strength-icon {
+      background: radial-gradient(circle at 50% 60%, rgba(41,121,255,0.85) 0%, rgba(41,121,255,0.55) 60%, rgba(0,0,0,0.0) 100%), #000;
+      box-shadow:
+        0 0 0 32px rgba(41,121,255,0.22) inset,
+        0 0 48px 16px rgba(41,121,255,0.38),
+        0 0 96px 32px rgba(41,121,255,0.18);
+    }
+    /* 修正: .strength-btn .strength-icon.hot の常時発光をやめる */
+    .strength-btn:active .strength-icon.hot,
+    .strength-btn.selected .strength-icon.hot {
+      background: radial-gradient(circle at 50% 60%, rgba(255,61,61,0.85) 0%, rgba(255,61,61,0.55) 60%, rgba(0,0,0,0.0) 100%), #000;
+      box-shadow:
+        0 0 0 32px rgba(255,61,61,0.22) inset,
+        0 0 48px 16px rgba(255,61,61,0.38),
+        0 0 96px 32px rgba(255,61,61,0.18);
+    }
+  </style>
 </head>
 <body>
-    <h1>こんにちは、世界！</h1>
-    <p>これはシンプルなHTMLページです。</p>
+  <div class="container">
+    <div class="panel" id="drinkTypePanel">
+      <div style="height: 40px;"></div>
+      <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 80px;">
+        <button class="drink-type-btn" onclick="showMainPanel('coffee')">
+          <span class="drink-type-label">コーヒー</span>
+        </button>
+        <button class="drink-type-btn" onclick="showMainPanel('latte')">
+          <span class="drink-type-label">カフェラテ</span>
+        </button>
+      </div>
+    </div>
+    <div class="panel" id="mainPanel" style="display:none;">
+      <div class="section-title"></div>
+      <div style="display: flex; justify-content: center; align-items: center; gap: 16px; width: 100%;">
+        <span class="divider"></span>
+        <span class="temp-label">COLD</span>
+        <span class="divider"></span>
+      </div>
+      <div class="row">
+        <button class="drink-btn" onclick="showStrength('cold','large')">
+          <div class="drink-icon large">
+            <svg viewBox="0 0 48 48">
+              <path d="M14 10 L34 10 L30 38 L18 38 Z" stroke="#fff" stroke-width="2.5" fill="none"/>
+              <path d="M14 22 L34 22" stroke="#fff" stroke-width="2.5" fill="none"/>
+            </svg>
+          </div>
+          <span class="drink-label-jp">大きめ</span>
+          <span class="drink-label-en">Large</span>
+        </button>
+        <button class="drink-btn" onclick="showStrength('cold','regular')">
+          <div class="drink-icon regular">
+            <svg viewBox="0 0 48 48">
+              <path d="M14 10 L34 10 L30 38 L18 38 Z" stroke="#fff" stroke-width="2.5" fill="none"/>
+              <path d="M14 22 L34 22" stroke="#fff" stroke-width="2.5" fill="none"/>
+            </svg>
+          </div>
+          <span class="drink-label-jp">ふつう</span>
+          <span class="drink-label-en">Regular</span>
+        </button>
+      </div>
+      <div style="display: flex; justify-content: center; align-items: center; gap: 16px; width: 100%; margin-top: 32px;">
+        <span class="divider hot"></span>
+        <span class="temp-label hot">HOT</span>
+        <span class="divider hot"></span>
+      </div>
+      <div class="row">
+        <button class="drink-btn hot" onclick="showStrength('hot','large')">
+          <div class="drink-icon large">
+            <svg viewBox="0 0 48 48">
+              <path d="M14 10 L34 10 L30 38 L18 38 Z" stroke="#fff" stroke-width="2.5" fill="none"/>
+              <path d="M14 22 L34 22" stroke="#fff" stroke-width="2.5" fill="none"/>
+            </svg>
+          </div>
+          <span class="drink-label-jp">大きめ</span>
+          <span class="drink-label-en">Large</span>
+        </button>
+        <button class="drink-btn hot" onclick="showStrength('hot','regular')">
+          <div class="drink-icon regular">
+            <svg viewBox="0 0 48 48">
+              <path d="M14 10 L34 10 L30 38 L18 38 Z" stroke="#fff" stroke-width="2.5" fill="none"/>
+              <path d="M14 22 L34 22" stroke="#fff" stroke-width="2.5" fill="none"/>
+            </svg>
+          </div>
+          <span class="drink-label-jp">ふつう</span>
+          <span class="drink-label-en">Regular</span>
+        </button>
+      </div>
+    </div>
+    <div class="panel" id="strengthPanel" style="display:none; min-width:340px;">
+      <div class="section-title"></div>
+      <button class="back-btn" onclick="backToMain()">戻る</button>
+      <div class="strength-panel">
+        <button class="strength-btn" onclick="selectStrength('strong')">
+          <div class="strength-icon large">
+            <svg viewBox="0 0 48 48">
+              <path d="M14 10 L34 10 L30 38 L18 38 Z" stroke="#fff" stroke-width="2.5" fill="none"/>
+              <path d="M14 22 L34 22" stroke="#fff" stroke-width="2.5" fill="none"/>
+            </svg>
+          </div>
+          <span class="strength-label-jp">濃いめ</span>
+        </button>
+        <button class="strength-btn" onclick="selectStrength('normal')">
+          <div class="strength-icon normal">
+            <svg viewBox="0 0 48 48">
+              <path d="M14 10 L34 10 L30 38 L18 38 Z" stroke="#fff" stroke-width="2.5" fill="none"/>
+              <path d="M14 22 L34 22" stroke="#fff" stroke-width="2.5" fill="none"/>
+            </svg>
+          </div>
+          <span class="strength-label-jp">普通</span>
+        </button>
+        <button class="strength-btn" onclick="selectStrength('weak')">
+          <div class="strength-icon weak">
+            <svg viewBox="0 0 48 48">
+              <path d="M14 10 L34 10 L30 38 L18 38 Z" stroke="#fff" stroke-width="2.5" fill="none"/>
+              <path d="M14 22 L34 22" stroke="#fff" stroke-width="2.5" fill="none"/>
+            </svg>
+          </div>
+          <span class="strength-label-jp">薄め</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div id="extractingOverlay" style="display:none;position:fixed;z-index:1000;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;">
+    <div style="background:#222;padding:48px 64px 56px 64px;border-radius:24px;box-shadow:0 8px 32px rgba(0,0,0,0.4);color:#fff;font-size:2.2rem;font-weight:600;letter-spacing:0.12em;display:flex;flex-direction:column;align-items:center;gap:24px;min-width:340px;">
+      <span style="display:flex;align-items:center;gap:18px;">
+        <svg width="36" height="36" viewBox="0 0 36 36" style="vertical-align:middle;opacity:0.7;"><ellipse cx="18" cy="18" rx="16" ry="16" fill="none" stroke="#2979ff" stroke-width="3" opacity="0.18"/></svg>
+        抽出中...
+      </span>
+      <div id="extractingSelected" style="font-size:1.25rem;color:#b3e5fc;margin:8px 0 0 0;letter-spacing:0.08em;text-align:center;min-height:1.5em;"></div>
+      <div style="width:220px;height:22px;background:#181c22;border-radius:12px;box-shadow:0 2px 12px rgba(41,121,255,0.10);margin-top:18px;overflow:hidden;">
+        <div id="extractMeter" style="height:100%;width:0%;background:linear-gradient(90deg,#2979ff 0%,#b3e5fc 100%);border-radius:12px;transition:width 0.15s;"></div>
+      </div>
+      <div id="extractPercent" style="margin-top:8px;font-size:1.1rem;color:#b3e5fc;letter-spacing:0.08em;">0%</div>
+    </div>
+  </div>
+  <style>
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+  </style>
+  <script>
+    let selected = { drink: '', temp: '', size: '', strength: '' };
+    function showMainPanel(drink) {
+      selected.drink = drink;
+      document.getElementById('drinkTypePanel').style.display = 'none';
+      document.getElementById('mainPanel').style.display = 'flex';
+    }
+    // 既存のshowStrengthを修正
+    function showStrength(temp, size) {
+      selected.temp = temp;
+      selected.size = size;
+      document.getElementById('mainPanel').style.display = 'none';
+      document.getElementById('strengthPanel').style.display = 'block';
+      // HOT選択時は濃さ選択の枠色を赤に、COLD時は青に
+      const strong = document.querySelector('.strength-icon.large');
+      const normal = document.querySelector('.strength-icon.normal');
+      const weak = document.querySelector('.strength-icon.weak');
+      if (temp === 'hot') {
+        strong.classList.add('hot');
+        normal.classList.add('hot');
+        weak.classList.add('hot');
+      } else {
+        strong.classList.remove('hot');
+        normal.classList.remove('hot');
+        weak.classList.remove('hot');
+      }
+      // 濃さ選択ボタンの発光状態をリセット
+      document.querySelectorAll('.strength-btn').forEach(btn => btn.classList.remove('selected'));
+    }
+    function backToMain() {
+      document.getElementById('strengthPanel').style.display = 'none';
+      document.getElementById('mainPanel').style.display = 'flex';
+    }
+    function selectStrength(strength) {
+      selected.strength = strength;
+      // 濃さ選択後、抽出中...を表示し、メーターアニメーション後に最初の画面に戻る
+      document.getElementById('strengthPanel').style.display = 'none';
+      document.getElementById('mainPanel').style.display = 'none';
+      document.getElementById('extractingOverlay').style.display = 'flex';
+      // 選択内容を1行ずつ表示
+      const sel = selected;
+      const drinkJp = sel.drink === 'latte' ? 'カフェラテ' : 'コーヒー';
+      const tempJp = sel.temp === 'hot' ? 'HOT' : 'COLD';
+      const sizeJp = sel.size === 'large' ? '大きめ' : 'ふつう';
+      let strengthJp = '';
+      if (sel.strength === 'strong') strengthJp = '濃いめ';
+      else if (sel.strength === 'normal') strengthJp = 'ふつう';
+      else if (sel.strength === 'weak') strengthJp = '薄め';
+      document.getElementById('extractingSelected').textContent = `${drinkJp}\n${tempJp}\n${sizeJp}\n${strengthJp}`;
+      // テキストを改行表示
+      document.getElementById('extractingSelected').innerHTML = document.getElementById('extractingSelected').textContent.replace(/\n/g, '<br>');
+      // メーターアニメーション
+      const meter = document.getElementById('extractMeter');
+      const percent = document.getElementById('extractPercent');
+      meter.style.width = '0%';
+      percent.textContent = '0%';
+      let progress = 0;
+      const duration = 5000; // 5秒
+      const interval = 30;
+      const steps = duration / interval;
+      const timer = setInterval(() => {
+        progress++;
+        const value = Math.min(100, Math.round(progress / steps * 100));
+        meter.style.width = value + '%';
+        percent.textContent = value + '%';
+        if (value >= 100) {
+          clearInterval(timer);
+          // 「ご利用ありがとうございます」を表示
+          document.getElementById('extractingSelected').innerHTML = '<span style="color:#fff;font-size:1.4rem;">ご利用ありがとうございます</span>';
+          setTimeout(() => {
+            document.getElementById('extractingOverlay').style.display = 'none';
+            document.getElementById('drinkTypePanel').style.display = 'flex';
+          }, 800);
+        }
+      }, interval);
+    }
+    function showExtractingOverlay(show) {
+      document.getElementById('extractingOverlay').style.display = show ? 'flex' : 'none';
+    }
+    function selectDrinkBtn(btn) {
+      document.querySelectorAll('.drink-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+    // mainPanelのボタンに選択時の色を付与
+    document.querySelectorAll('.drink-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        selectDrinkBtn(this);
+      });
+    });
+    // mainPanelのボタンに押し込み時だけ色を付与し、離した時に画面遷移
+    document.querySelectorAll('.drink-btn').forEach(btn => {
+      let temp, size;
+      if (btn.classList.contains('hot')) temp = 'hot'; else temp = 'cold';
+      if (btn.querySelector('.drink-icon.large')) size = 'large'; else size = 'regular';
+      // 押し込み時に色を付与
+      btn.addEventListener('mousedown', function(e) {
+        btn.classList.add('selected');
+      });
+      btn.addEventListener('touchstart', function(e) {
+        btn.classList.add('selected');
+      });
+      // 離した時に色を消して遷移
+      function handleUp(e) {
+        btn.classList.remove('selected');
+        showStrength(temp, size);
+      }
+      btn.addEventListener('mouseup', handleUp);
+      btn.addEventListener('mouseleave', function(e) {
+        btn.classList.remove('selected');
+      });
+      btn.addEventListener('touchend', handleUp);
+      btn.addEventListener('touchcancel', function(e) {
+        btn.classList.remove('selected');
+      });
+    });
+    // mainPanelのCOLD/HOT/サイズ選択ボタンに「押し込んだ時だけ光り、離した時に次ページへ進む」動作を実装
+    document.querySelectorAll('#mainPanel .drink-btn').forEach(btn => {
+      // 既存のonclick属性を削除
+      btn.removeAttribute('onclick');
+      // 既存のmousedown/touchstart/up/endイベントを一旦削除（重複防止）
+      btn.onmousedown = null;
+      btn.onmouseup = null;
+      btn.ontouchstart = null;
+      btn.ontouchend = null;
+      // 押し込み時にselectedクラス付与
+      btn.addEventListener('mousedown', function(e) {
+        btn.classList.add('selected');
+      });
+      btn.addEventListener('touchstart', function(e) {
+        btn.classList.add('selected');
+      });
+      // 離した時にselectedクラス削除＋showStrength呼び出し
+      const callShowStrength = () => {
+        btn.classList.remove('selected');
+        // data属性からtemp/sizeを取得
+        callShowStrength();
+      };
+      btn.addEventListener('touchend', function(e) {
+        callShowStrength();
+      });
+    });
+    // コーヒー・カフェラテ選択ボタンにもselectedクラスで光る効果を付与
+    document.querySelectorAll('.drink-type-btn').forEach(btn => {
+      btn.addEventListener('mousedown', function(e) {
+        btn.classList.add('selected');
+      });
+      btn.addEventListener('touchstart', function(e) {
+        btn.classList.add('selected');
+      });
+      function removeSelected() {
+        btn.classList.remove('selected');
+      }
+      btn.addEventListener('mouseup', removeSelected);
+      btn.addEventListener('mouseleave', removeSelected);
+      btn.addEventListener('touchend', removeSelected);
+      btn.addEventListener('touchcancel', removeSelected);
+    });
+    // 濃さ選択ボタンにも押し込み時に光る（selected）効果を付与
+    document.querySelectorAll('.strength-btn').forEach(btn => {
+      btn.addEventListener('mousedown', function(e) {
+        // すべてのボタンからselectedを外す
+        document.querySelectorAll('.strength-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+      });
+      btn.addEventListener('touchstart', function(e) {
+        document.querySelectorAll('.strength-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+      });
+      function removeSelected() {
+        btn.classList.remove('selected');
+      }
+      btn.addEventListener('mouseup', removeSelected);
+      btn.addEventListener('mouseleave', removeSelected);
+      btn.addEventListener('touchend', removeSelected);
+      btn.addEventListener('touchcancel', removeSelected);
+    });
+    // COLD大きめ・ふつうボタン押下時にCOLDラベルと線を光らせる
+    const coldLabel = document.querySelector('.temp-label:not(.hot)');
+    const coldDividers = document.querySelectorAll('.divider:not(.hot)');
+    document.querySelectorAll('#mainPanel .drink-btn').forEach(btn => {
+      if (!btn.classList.contains('hot')) {
+        btn.addEventListener('mousedown', function(e) {
+          coldLabel.classList.add('cold-glow');
+          coldDividers.forEach(div => div.classList.add('cold-glow'));
+        });
+        btn.addEventListener('touchstart', function(e) {
+          coldLabel.classList.add('cold-glow');
+          coldDividers.forEach(div => div.classList.add('cold-glow'));
+        });
+        function removeGlow() {
+          coldLabel.classList.remove('cold-glow');
+          coldDividers.forEach(div => div.classList.remove('cold-glow'));
+        }
+        btn.addEventListener('mouseup', removeGlow);
+        btn.addEventListener('mouseleave', removeGlow);
+        btn.addEventListener('touchend', removeGlow);
+        btn.addEventListener('touchcancel', removeGlow);
+      }
+    });
+    // HOT大きめ・ふつうボタン押下時にHOTラベルと線を光らせる
+    const hotLabel = document.querySelector('.temp-label.hot');
+    const hotDividers = document.querySelectorAll('.divider.hot');
+    document.querySelectorAll('#mainPanel .drink-btn.hot').forEach(btn => {
+      btn.addEventListener('mousedown', function(e) {
+        hotLabel.classList.add('hot-glow');
+        hotDividers.forEach(div => div.classList.add('hot-glow'));
+      });
+      btn.addEventListener('touchstart', function(e) {
+        hotLabel.classList.add('hot-glow');
+        hotDividers.forEach(div => div.classList.add('hot-glow'));
+      });
+      function removeGlow() {
+        hotLabel.classList.remove('hot-glow');
+        hotDividers.forEach(div => div.classList.remove('hot-glow'));
+      }
+      btn.addEventListener('mouseup', removeGlow);
+      btn.addEventListener('mouseleave', removeGlow);
+      btn.addEventListener('touchend', removeGlow);
+      btn.addEventListener('touchcancel', removeGlow);
+    });
+  </script>
 </body>
 </html>
